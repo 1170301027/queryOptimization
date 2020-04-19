@@ -18,6 +18,7 @@ class CFG():
         <condition> -> <id> <logicalOperator> <patten>
         <condition> -> <id> | <id>,<id>
         <fromlist> -> ( <id> JOIN <id> ) | ( <id> JOIN <sql> )
+        <logicalOperator> -> = | < | > | <= | >=
 
         <sql> -> PROJECTION [ <where> ] ( <sql> )
 
@@ -30,29 +31,29 @@ class CFG():
                        [Nonterminal('<SQL>')]))
 
         set(Production(Nonterminal('<SQL>'),
-                       [Terminal(Tag.SELECT,'SELECT'),Terminal(Tag.LRP,'['),Nonterminal('<where>'),Terminal(Tag.LRP,']')]))
+                       [Terminal(Tag.SELECT,'SELECT'),Terminal(Tag.LRP,'['),Nonterminal('<where>'),Terminal(Tag.RRP,']'),Nonterminal('<fromlist>')]))
         set(Production(Nonterminal('<SQL>'),
                        [Terminal(Tag.PROJECTION,'PROJECTION'),Terminal(Tag.LRP,'['),
-                        Nonterminal('<where>'),Terminal(Tag.LRP,']'),Terminal(Tag.SLP,'('),Nonterminal('<SQL>'),Terminal(Tag.SRP,')')]))
+                        Nonterminal('<where>'),Terminal(Tag.RRP,']'),Terminal(Tag.SLP,'('),Nonterminal('<SQL>'),Terminal(Tag.SRP,')')]))
 
         set(Production(Nonterminal('<where>'),
-                       [Nonterminal('<condition>')]))
+                       [Nonterminal('<condition>'), Terminal(Tag.AND, '&'), Nonterminal('<condition>')]))
         set(Production(Nonterminal('<where>'),
-                       [Nonterminal('<condition>'),Terminal(Tag.AND,'&'),Nonterminal('<condition>')]))
+                       [Nonterminal('<condition>')]))
 
         set(Production(Nonterminal('<condition>'),
                        [Terminal(Tag.PROPERTY,'<id>'),Nonterminal('<logicalOperator>'),Terminal(Tag.PATTERN,'<pattern>')]))
         set(Production(Nonterminal('<condition>'),
-                       [Terminal(Tag.PROPERTY,'<id>')]))
-        set(Production(Nonterminal('<condition>'),
                        [Terminal(Tag.PROPERTY,'<id>'),Terminal(Tag.COMMA,','),Terminal(Tag.PROPERTY,'<id>')]))
+        set(Production(Nonterminal('<condition>'),
+                       [Terminal(Tag.PROPERTY,'<id>')]))
         for i in [[Terminal(Tag.EQ,Tag.EQ)],[Terminal(Tag.LT,Tag.LT)],[Terminal(Tag.GT,Tag.GT)],[Terminal(Tag.LE,Tag.LE)],[Terminal(Tag.GE,Tag.GE)]]:
             set(Production(Nonterminal('<logicalOperator>'),i))
 
         set(Production(Nonterminal('fromlist'),
                        [Terminal(Tag.SLP,'('),Terminal(Tag.PROPERTY,'<id>'),Terminal(Tag.JOIN,'JOIN'),
                         Terminal(Tag.PROPERTY,'<id>'),Terminal(Tag.SRP,')')]))
-        set(Production(Nonterminal('formlist'),
+        set(Production(Nonterminal('fromlist'),
                        [Terminal(Tag.SLP,'('),Terminal(Tag.PROPERTY,'<id>'),Terminal(Tag.JOIN,'JOIN'),
                         Nonterminal('<SQL>'),Terminal(Tag.SRP,')')]))
 

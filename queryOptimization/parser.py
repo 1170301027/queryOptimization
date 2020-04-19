@@ -36,11 +36,12 @@ class Parser():
             elif token in self.logicalOperator:
                 self.tokens.append(Terminal(self.logicalOperatorTag[self.logicalOperator.index(token)],token))
             elif token in self.binaryOperator:
-                self.tokens.append(Terminal(Tag.BINARYOPERATOR,token))
+                self.tokens.append(Terminal(Tag.AND,token))
             else:
                 self.tokens.append(Terminal(Tag.PROPERTY,token))
 
     def doParse(self):
+        #归约程序
         def reduction(nonterminal):
             productions = self.cfg.getProductions(nonterminal)
             flag = False
@@ -60,18 +61,22 @@ class Parser():
                         if symbol == self.tokens[self.currentI]:
                             print('匹配')
                             flag = True
-                            self.tree.append(str(symbol)+'--------')
+                            self.tree.append(str(symbol)+'---------------终结符')
                             if self.currentI < len(self.tokens):
                                 self.currentI += 1
-                            break
+                            # break
                     else: # 为终结符，但是不等于当前的符号，需要回溯
                         print(str(symbol))
+
+            print(flag)
+            print(str(nonterminal) + ' : ')
             return flag
             # if self.currentI != len(self.tokens):
             #     print(str(nonterminal)+' : ')
             #     print('分析出错 :%s' %str(self.tokens[self.currentI]))
             #     raise None
 
+        self.tree.append(str(self.cfg.start))
         reduction(self.cfg.start)
 
     def run(self,query):
