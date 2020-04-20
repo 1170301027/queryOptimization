@@ -8,7 +8,8 @@ class Tag():
     KEYWORD = '<keyword>' # SQL keyword
     SELECT = '<select>'
     PROJECTION = '<projection>'
-    JOIN = '<join>'
+    AVG = '<avg>'
+    JOIN = '<binaryOperator>'
 
     SELLIST = '<selList>'
     FROMLIST = '<fromList>'
@@ -22,7 +23,7 @@ class Tag():
     RRP = '<RRP>'
     SLP = '<SLP>'
     SRP = '<SRP>'
-    COMMA = ','
+    COMMA = '<COMMA>'
 
     BINARYOPERATOR = '<binaryOperator>'
     EQ = '='
@@ -30,3 +31,5 @@ class Tag():
     GT = '>'
     LE = '<='
     GE = '>='
+
+    END = '$'
