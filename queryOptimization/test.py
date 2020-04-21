@@ -1,5 +1,5 @@
-from queryOptimization.parser import Parser
 from queryOptimization.UI import UI
+from queryOptimization.parser import Parser
 
 if __name__ == '__main__':
     parser = Parser()

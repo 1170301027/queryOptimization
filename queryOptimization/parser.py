@@ -1,6 +1,7 @@
-from queryOptimization.token import Token
 from queryOptimization.cfg import *
 from queryOptimization.item import Item
+from queryOptimization.token import Token
+
 
 class Parser():
     """

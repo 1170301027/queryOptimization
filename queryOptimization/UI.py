@@ -1,7 +1,9 @@
-from tkinter import Tk, ttk
 from tkinter import *
+from tkinter import Tk, ttk
+
 from queryOptimization.cfg import *
 from queryOptimization.tag import Tag
+
 
 class UI():
     """
