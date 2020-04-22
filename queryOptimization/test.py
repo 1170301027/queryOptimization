@@ -21,5 +21,5 @@ if __name__ == '__main__':
     #     ui[-1].root()
     # 单条测试
     i = 0
-    ui = UI(Parser(),query[i])
+    ui = UI(Parser(),querys[i])
     ui.root()
