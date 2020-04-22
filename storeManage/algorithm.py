@@ -6,6 +6,17 @@ class Algorithm():
     def __init__(self):
         pass
     
-    def ():
+    def relationSelect(self):
         pass
-        
+
+    def relationProjection(self):
+        pass
+
+    def nested_loop_join(self):
+        pass
+
+    def hash_join(self):
+        pass
+
+    def sort_merge_join(self):
+        pass
