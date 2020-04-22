@@ -1,11 +1,12 @@
 from storeManage.data import Data
 from storeManage.extmem import Extmem
-
-def testDisk():
-    extmem = Extmem()
-    blkSize = 64
-    bufSize = 520
-    buf = extmem.initBuffer(bufSize,blkSize)
+from storeManage.algorithm import Algorithm
+extmem = Extmem()
+blkSize = 64
+bufSize = 520
+buf = extmem.initBuffer(bufSize,blkSize)
+algorithm = Algorithm()
+def testWriteToDisk():
     blkIndex = buf.getNewBlock()
     addrs = []
 
@@ -26,5 +27,22 @@ def testInitData():
     data = Data()
     data.init_data()
 
-testInitData()
-# testDisk()
+def testReadFromDisk():
+    extmem.readBlockFromDisk(1230600,buf)
+    print(str(buf))
+
+def testRelationSelect():
+    # R.A = 40 -> 从 10000 开始存
+    addrs = algorithm.relationSelect(algorithm.data.R, 1, 40, 10000)
+    print(addrs)
+
+def testRelationProjection():
+    addrs = algorithm.relationProjection(algorithm.data.R, 1, 20000)
+    print(addrs)
+
+# testInitData()
+# testWriteToDisk()
+# testReadFromDisk()
+
+testRelationSelect()
+testRelationProjection()

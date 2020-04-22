@@ -24,15 +24,34 @@ class Extmem():
             os.remove(file)
 
     def readBlockFromDisk(self,addr,buf):
+        def writeToBlock(block,integer,index):
+            bytes = integer.to_bytes(4,byteorder='little',signed=True)
+            block[index:index+4] = bytes[:]
+            if index+4 >= 7*8-1:
+                return 0
+            else:
+                return index+4
+
+        if not isinstance(buf,Buffer):
+            print('param error')
+            raise None
         file = self.diskPath + str(addr)
         if os.path.exists(file):
             with open(file, 'r') as f:
-                return buf.insertBlock(f.read()) # index
+                if not buf.isBufferFull():
+                    block = buf.getNewBlock()
+                    list = f.readlines()
+                    index = 0
+                    for tuple in list:
+                        first = int(tuple.split(' ')[0])
+                        second = int(tuple.split(' ')[1])
+                        index = writeToBlock(block, first, index)
+                        index = writeToBlock(block, second, index)
+                    return buf.insertBlock(block,addr) # index
 
     def writeBlockToDisk(self,blockIndex,addr,buf):
         if not isinstance(buf,Buffer):
             return False
-        print(str(buf))
         file = self.diskPath+str(addr)
         block = buf.getBlock(blockIndex)
         buf.freeBlock(blockIndex)
@@ -44,6 +63,12 @@ class Extmem():
                 temp = block[offest:offest+8]
                 first_value = int.from_bytes(temp[0:4],byteorder='little',signed=True)
                 second_value = int.from_bytes(temp[4:],byteorder='little',signed=True)
+                if first_value == 0 and second_value == 0:
+                    continue
+                if first_value == 0:
+                    first_value = ''
+                if second_value == 0:
+                    second_value = ''
                 f.write(str(first_value) + ' ' + str(second_value) + '\n')
 
 
@@ -80,11 +105,8 @@ class Buffer():
         self.currentIndex = (0,0)
 
     def free(self):
-        # self.numAllBlock = 0
-        # self.numFreeBlock = 0
-        # self.bufSize = 0
-        # self.numIO = 0
-        # self.blockSize = 0
+        self.numFreeBlock = self.numAllBlock
+        del self.data
         self.data = []
         
     def isBufferFull(self):
@@ -100,7 +122,7 @@ class Buffer():
         '''
         if self.isBufferFull():
             return None
-        return len(self.data)
+        return bytearray(self.blockSize)
     
     def freeBlock(self, index): # 删除，修改上一个块的地址字段为当前块下一个块的地址
         '''
@@ -126,7 +148,7 @@ class Buffer():
         if not self.isBufferFull():
             index = len(self.data)
             if index != 0:
-                self.data[index - 1][self.suffixBlockAddressIndex:] = addr
+                self.data[index - 1][self.suffixBlockAddressIndex:] = addr.to_bytes(4,byteorder='little',signed=True)[:]
             self.data.append(data)
             next_addr = 0
             self.data[-1][self.suffixBlockAddressIndex:] = next_addr.to_bytes(4,byteorder='little',signed=True)[:]

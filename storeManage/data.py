@@ -16,7 +16,7 @@ class Data():
         self.blkSize = 64
         self.bufSize = 520
         self.buf = self.extmem.initBuffer(self.bufSize,self.blkSize)
-        # self.init_data()
+        self.init_data()
 
     def init_data(self):
         # 辅助函数，在块的指定位置添加vlaue->integer
@@ -37,7 +37,7 @@ class Data():
                 random_gen = random.Random()
                 ranA = random_gen.randint(firstMin,firstMax+1)
                 ranB = random_gen.randint(secondMin,secondMax+1)
-                if count < 7:
+                if count < 6:
                     index = writeToBlock(block, ranA, index)
                     index = writeToBlock(block, ranB, index)
                     count += 1
@@ -49,10 +49,11 @@ class Data():
                     block = bytearray(self.blkSize)
                     count = 0
                     self.extmem.writeBlockToDisk(index,addr,self.buf)
+            return relation[:-1]
 
         self.R.append(1230600)
-        init(112,1,40,1,1000,self.R)
+        self.R = init(112,1,40,1,1000,self.R)[:]
         self.S.append(2461200)
-        init(224,20,60,1,1000,self.S)
-
+        self.S = init(224,20,60,1,1000,self.S)[:]
+        print('init data successfully')
 
