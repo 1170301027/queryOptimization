@@ -37,7 +37,7 @@ class Data():
                 random_gen = random.Random()
                 ranA = random_gen.randint(firstMin,firstMax+1)
                 ranB = random_gen.randint(secondMin,secondMax+1)
-                if count < 6:
+                if count < 7:
                     index = writeToBlock(block, ranA, index)
                     index = writeToBlock(block, ranB, index)
                     count += 1

@@ -6,6 +6,7 @@ blkSize = 64
 bufSize = 520
 buf = extmem.initBuffer(bufSize,blkSize)
 algorithm = Algorithm()
+
 def testWriteToDisk():
     blkIndex = buf.getNewBlock()
     addrs = []
@@ -42,7 +43,7 @@ def testRelationProjection():
 
 def testNestLoopJoin():
     # R.A == S.C
-    addrs = algorithm.nested_loop_join(1,1)
+    addrs = algorithm.nested_loop_join(1,1,30000)
     print(addrs)
 
 def testHashJoin():
@@ -57,3 +58,4 @@ def testSortMergeJoin():
 
 # testRelationSelect()
 # testRelationProjection()
+testNestLoopJoin()
