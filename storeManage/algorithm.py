@@ -123,8 +123,20 @@ class Algorithm():
             return self.writeToDisk(firstAddr, result)
         return None
 
-    def nested_loop_join(self):
-        ''''''
+    def nested_loop_join(self,r_choice,s_choice):
+        '''
+        Nested-Loop Join 算法实现
+        :param r_choice: 关系R的第几个属性
+        :param s_choice: 关系S的第几个属性
+        :return:
+        '''
+        for r_addr in self.data.R:
+            r_index = self.extmem.readBlockFromDisk(r_addr,self.buf)
+            for s_addr in self.data.S:
+                pass
+
+            self.buf.free()
+
 
 
     def hash_join(self):

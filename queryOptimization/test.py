@@ -1,4 +1,4 @@
-from queryOptimization.UI import UI
+from ui.UI import UI
 from queryOptimization.parser import Parser
 
 if __name__ == '__main__':

@@ -40,9 +40,20 @@ def testRelationProjection():
     addrs = algorithm.relationProjection(algorithm.data.R, 1, 20000)
     print(addrs)
 
+def testNestLoopJoin():
+    # R.A == S.C
+    addrs = algorithm.nested_loop_join(1,1)
+    print(addrs)
+
+def testHashJoin():
+    pass
+
+def testSortMergeJoin():
+    pass
+
 # testInitData()
 # testWriteToDisk()
 # testReadFromDisk()
 
-testRelationSelect()
-testRelationProjection()
+# testRelationSelect()
+# testRelationProjection()
