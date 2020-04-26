@@ -7,6 +7,7 @@ class Extmem():
     """
     def __init__(self):
         self.diskPath = 'disk/'
+        self.numIO = 0
 
     def initBuffer(self,bufSize,blkSize):
         return Buffer(bufSize,blkSize)
@@ -37,6 +38,7 @@ class Extmem():
             raise None
         file = self.diskPath + str(addr)
         if os.path.exists(file):
+            self.numIO += 1
             with open(file, 'r') as f:
                 if not buf.isBufferFull():
                     block = buf.getNewBlock()
@@ -58,6 +60,7 @@ class Extmem():
         if block != None:
             block = block[0 : buf.blockSize - 4]
         with open(file,'w+') as f:
+            self.numIO += 1
             for i in range(7):
                 offest = i*8
                 temp = block[offest:offest+8]
@@ -71,6 +74,8 @@ class Extmem():
                     second_value = ''
                 f.write(str(first_value) + ' ' + str(second_value) + '\n')
 
+    def __str__(self):
+        return 'number of I/O : %d' %self.numIO
 
 class Block():
     """

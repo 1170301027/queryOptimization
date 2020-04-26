@@ -43,7 +43,7 @@ def testRelationProjection():
 
 def testNestLoopJoin():
     # R.A == S.C
-    addrs = algorithm.nested_loop_join(1,1,30000)
+    addrs = algorithm.nest_loop_join(1,1,30000)
     print(addrs)
 
 def testHashJoin():
@@ -59,3 +59,4 @@ def testSortMergeJoin():
 # testRelationSelect()
 # testRelationProjection()
 testNestLoopJoin()
+testHashJoin()

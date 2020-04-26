@@ -132,9 +132,9 @@ class Algorithm():
             return self.writeToDisk(firstAddr, result)
         return None
 
-    def nested_loop_join(self,r_choice,s_choice,addr):
+    def nest_loop_join(self,r_choice,s_choice,addr):
         '''
-        Nested-Loop Join 算法实现
+        Nest-Loop Join 算法实现
         :param r_choice: 关系R的第几个属性
         :param s_choice: 关系S的第几个属性
         :return: 新写入块的地址
@@ -152,7 +152,7 @@ class Algorithm():
         write_back = self.buf.getNewBlock()  # 写回的块分配存储空间
         next_index = 0  # 存储块的下一个地址。
         # 每次用一个块存R属性的元组，六个块存S属性的元组，最后一块保留用于存储join结果
-        for r_addr in self.data.R:
+        '''for r_addr in self.data.R:
             r_index = self.extmem.readBlockFromDisk(r_addr,self.buf) # r的块索引
             s_index_list = [] # s的所有块索引列表
             # 遍历 S 所有块
@@ -189,7 +189,46 @@ class Algorithm():
                     self.buf.freeBlock(s_index_list[0])
                 s_index_list = []
             # 释放R的唯一一个块
-            self.buf.freeBlock(r_index)
+            self.buf.freeBlock(r_index)'''
+        r_index_list = []  # r的所有块索引列表
+        for r_addr in self.data.R:
+            print('zhixing')
+            r_index = self.extmem.readBlockFromDisk(r_addr,self.buf) # r的块索引
+            r_index_list.append(r_index)
+            if len(r_index_list) != 6 and r_addr != self.data.R[-1]:
+                continue
+            for s_addr in self.data.S:
+                print('yunxing ')
+                s_index = self.extmem.readBlockFromDisk(s_addr,self.buf)
+                s_tuples = self.parserBlock(self.buf.getBlock(s_index))
+                for r_index in r_index_list:
+                    r_tuples = self.parserBlock(self.buf.getBlock(r_index))
+                    # 用于判断θ条件的两层循环
+                    print(r_tuples)
+                    print(s_tuples)
+                    for i in r_tuples:
+                        for j in s_tuples:
+                            if i[r_choice] == j[s_choice]:
+                                print(i,j)
+                                next_index = self.writeToBlock(write_back, i[0], next_index)
+                                next_index = self.writeToBlock(write_back, i[1], next_index)
+                                next_index = self.writeToBlock(write_back, j[0], next_index)
+                                next_index = self.writeToBlock(write_back, j[1], next_index)
+                            if next_index >= 3 * 12:
+                                next_index = 0
+                                addr = addrs[-1]
+                                addrs.append(addr + 1)
+                                write_back_index = self.buf.insertBlock(write_back, addr)
+                                self.extmem.writeBlockToDisk(write_back_index, addr, self.buf)
+                                self.buf.freeBlock(write_back_index)
+                                write_back = self.buf.getNewBlock()
+                # 释放掉S的当前块
+                self.buf.freeBlock(s_index)
+            # 释放掉R的所有块5
+            for i in range(len(r_index_list)):
+                self.buf.freeBlock(r_index_list[0])
+            r_index_list.clear()
+
         if next_index != 0: # 结束若由未写入磁盘的存在，则写入
             next_index = self.buf.insertBlock(write_back,addrs[-1])
             self.extmem.writeBlockToDisk(next_index,addrs[-1],self.buf)
@@ -198,12 +237,8 @@ class Algorithm():
             del addrs[-1]
         return addrs
 
-
-
-
-
     def hash_join(self):
-        pass
+        '''Hash-Join 算法实现'''
 
     def sort_merge_join(self):
         pass
