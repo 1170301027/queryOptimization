@@ -192,24 +192,19 @@ class Algorithm():
             self.buf.freeBlock(r_index)'''
         r_index_list = []  # r的所有块索引列表
         for r_addr in self.data.R:
-            print('zhixing')
             r_index = self.extmem.readBlockFromDisk(r_addr,self.buf) # r的块索引
             r_index_list.append(r_index)
             if len(r_index_list) != 6 and r_addr != self.data.R[-1]:
                 continue
             for s_addr in self.data.S:
-                print('yunxing ')
                 s_index = self.extmem.readBlockFromDisk(s_addr,self.buf)
                 s_tuples = self.parserBlock(self.buf.getBlock(s_index))
                 for r_index in r_index_list:
                     r_tuples = self.parserBlock(self.buf.getBlock(r_index))
                     # 用于判断θ条件的两层循环
-                    print(r_tuples)
-                    print(s_tuples)
                     for i in r_tuples:
                         for j in s_tuples:
                             if i[r_choice] == j[s_choice]:
-                                print(i,j)
                                 next_index = self.writeToBlock(write_back, i[0], next_index)
                                 next_index = self.writeToBlock(write_back, i[1], next_index)
                                 next_index = self.writeToBlock(write_back, j[0], next_index)
@@ -237,8 +232,90 @@ class Algorithm():
             del addrs[-1]
         return addrs
 
-    def hash_join(self):
-        '''Hash-Join 算法实现'''
+    def hash_join(self, r_choice, s_choice, addr):
+        '''
+        Hash-Join 算法实现
+        用两个表中较小的表利用join key 在内存中建立散列表， 扫描较大的表并探测散列表，
+        找出与hash表匹配的行
+        :param r_choice:
+        :param s_choice:
+        :param addr: 要存储的首地址（块名）
+        :return: 磁盘上的位置列表
+        '''
+
+        # 参数判断阶段
+        if r_choice != 1 and r_choice != 2:
+            return False
+        if s_choice != 1 and s_choice != 2:
+            return False
+        r_choice -= 1
+        s_choice -= 1
+        self.buf.free()
+        # 执行阶段
+        # 制 r_hash_table
+        r_hash_table = {} # dict {hash_func(integer):{integer:[tuple]}}
+        for r_addr in self.data.R:
+            index = self.extmem.readBlockFromDisk(r_addr,self.buf)
+            if index == None: # 读完所有R的块
+                break
+            tuples = self.parserBlock(self.buf.getBlock(index)) # 解析块
+            # 加入hash_table
+            for tuple in tuples:
+                integer = tuple[r_choice]
+                key = hash(integer)
+                if key not in r_hash_table.keys():
+                    r_hash_table[key] = []
+                r_hash_table[key].append(tuple)
+            self.buf.freeBlock(index)
+
+        print(r_hash_table)
+        # 制 s_hash_table
+        s_hash_table = {}
+        for s_addr in self.data.S:
+            index = self.extmem.readBlockFromDisk(s_addr,self.buf)
+            if index == None:
+                break
+            tuples = self.parserBlock(self.buf.getBlock(index))  # 解析块
+            # 加入hash_table
+            for tuple in tuples:
+                integer = tuple[s_choice]
+                key = hash(integer)
+                if key not in s_hash_table.keys():
+                    s_hash_table[key] = []
+                s_hash_table[key].append(tuple)
+            self.buf.freeBlock(index)
+
+        print()
+        print(s_hash_table)
+        # join
+        addrs = [addr] # 写入地址列表，返回值
+        next_index = 0 # 块内索引
+        write_back = self.buf.getNewBlock() # 初始化写回块
+        for r_key in r_hash_table.keys():
+            if r_key in s_hash_table.keys():
+                r_tuples = r_hash_table[r_key]
+                s_tuples = s_hash_table[r_key]
+                for r_tuple in r_tuples:
+                    for s_tuple in s_tuples:
+                        next_index = self.writeToBlock(write_back, r_tuple[0], next_index)
+                        next_index = self.writeToBlock(write_back, r_tuple[1], next_index)
+                        next_index = self.writeToBlock(write_back, s_tuple[0], next_index)
+                        next_index = self.writeToBlock(write_back, s_tuple[1], next_index)
+                        if next_index >= 3 * 12:
+                            next_index = 0
+                            addr = addrs[-1]
+                            addrs.append(addr + 1)
+                            write_back_index = self.buf.insertBlock(write_back, addr)
+                            self.extmem.writeBlockToDisk(write_back_index, addr, self.buf)
+                            self.buf.freeBlock(write_back_index)
+                            write_back = self.buf.getNewBlock()
+        if next_index != 0: # 结束若由未写入磁盘的存在，则写入
+            next_index = self.buf.insertBlock(write_back,addrs[-1])
+            self.extmem.writeBlockToDisk(next_index,addrs[-1],self.buf)
+            self.buf.freeBlock(next_index)
+        else: # 无则删除冗余地址后返回
+            del addrs[-1]
+        return addrs
 
     def sort_merge_join(self):
         pass

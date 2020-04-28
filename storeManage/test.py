@@ -47,7 +47,9 @@ def testNestLoopJoin():
     print(addrs)
 
 def testHashJoin():
-    pass
+    # R.A == S.C
+    addrs = algorithm.hash_join(1,1,40000)
+    print(addrs)
 
 def testSortMergeJoin():
     pass
