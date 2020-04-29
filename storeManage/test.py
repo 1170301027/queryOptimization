@@ -52,7 +52,9 @@ def testHashJoin():
     print(addrs)
 
 def testSortMergeJoin():
-    pass
+    # R.A == S.C
+    addrs = algorithm.hash_join(1, 1, 50000)
+    print(addrs)
 
 # testInitData()
 # testWriteToDisk()
@@ -60,5 +62,6 @@ def testSortMergeJoin():
 
 # testRelationSelect()
 # testRelationProjection()
-testNestLoopJoin()
-testHashJoin()
+# testNestLoopJoin()
+# testHashJoin()
+testSortMergeJoin()

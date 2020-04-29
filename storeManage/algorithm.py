@@ -317,5 +317,59 @@ class Algorithm():
             del addrs[-1]
         return addrs
 
-    def sort_merge_join(self):
-        pass
+    def sort_merge_join(self,r_choice,s_choice,addr):
+        def mergesort(seq,choice):
+            """归并排序"""
+            if len(seq) <= 1:
+                return seq
+            mid = len(seq) / 2  # 将列表分成更小的两个列表
+            # 分别对左右两个列表进行处理，分别返回两个排序好的列表
+            left = mergesort(seq[:mid],choice)
+            right = mergesort(seq[mid:],choice)
+            # 对排序好的两个列表合并，产生一个新的排序好的列表
+            return merge(left, right, choice)
+
+        def merge(left, right, choice):
+            """合并两个已排序好的列表，产生一个新的已排序好的列表"""
+            result = []  # 新的已排序好的列表
+            i = 0  # 下标
+            j = 0
+            # 对两个列表中的元素 两两对比。
+            # 将最小的元素，放到result中，并对当前列表下标加1
+            while i < len(left) and j < len(right):
+                if left[i][choice] <= right[j][choice]:
+                    result.append(left[i])
+                    i += 1
+                else:
+                    result.append(right[j])
+                    j += 1
+            result += left[i:]
+            result += right[j:]
+            return result
+
+        def get_data(addrs,choice):
+            '''
+            内存二分之一的归并
+            :param addrs: 块所在的地址
+            :return:
+            '''
+            A_addrs = addrs[0:7][:]
+            B_addrs = addrs[8:15][:]
+            self.buf.free()
+            data_list = []
+            for addr in A_addrs:
+                index = self.extmem.readBlockFromDisk(addr)
+                data_list.extend(self.parserBlock(index))
+            data_list = mergesort(data_list,choice)
+
+
+        # 参数判断阶段
+        if r_choice != 1 and r_choice != 2:
+            return False
+        if s_choice != 1 and s_choice != 2:
+            return False
+        r_choice -= 1
+        s_choice -= 1
+        self.buf.free()
+        # 执行阶段
+        addrs = [addr]
