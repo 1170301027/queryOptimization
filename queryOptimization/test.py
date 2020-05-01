@@ -20,6 +20,6 @@ if __name__ == '__main__':
         ui.append(UI(Parser(), i))
         ui[-1].root()
     # 单条测试
-    # i = 3
+    # i = 4
     # ui = UI(Parser(),querys[i])
     # ui.root()

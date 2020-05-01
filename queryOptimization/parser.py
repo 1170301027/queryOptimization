@@ -18,6 +18,7 @@ class Parser():
         self.gotos = {}
 
         self.algebra = {}
+        self.optimization = {}
 
     def gettoken(self,query):
         '''
@@ -340,11 +341,11 @@ class Parser():
 
         self.table(self.cfg)
         k = 0
-        for items in self.item_family:
-            print("S" + str(k))
-            for i in items:
-                print(i)
-            k += 1
+        # for items in self.item_family:
+        #     print("S" + str(k))
+        #     for i in items:
+        #         print(i)
+        #     k += 1
         # 初始化时将0状态放入状态栈中
         state_stack = [0,]
         node_stack = []
@@ -352,8 +353,8 @@ class Parser():
         look = None
         move()
         while True:
-            print(look)
-            print(state_stack)
+            # print(look)
+            # print(state_stack)
             state_actions =  self.actions[state_stack[-1]]
             error_flag1 = True
             for action in state_actions:
@@ -396,22 +397,21 @@ class Parser():
 
     def run(self,query):
         self.gettoken(query)
-        # for token in self.tokens:
-        #     print(str(token))
-        for production in self.cfg.productions:
-            print(str(production))
         self.program()
 
     def gen_relation_algebra(self):
+        '''
+        生成关系代数，查询树
+        :return:
+        '''
+        self.algebra.clear()
         i = 0
         current_str = ''
         while i<len(self.tokens):
             token = self.tokens[i]
             if token.character == Tag.SELECT or token.character == Tag.PROJECTION or token.character == Tag.AVG:
                 if token.show_str in self.algebra.keys():
-                    print('minghzong')
                     token.set_show_str(token.show_str+'_')
-                    print(token.show_str)
                 if current_str != '':
                     self.algebra[current_str].append(token.show_str)
                 self.algebra[token.show_str] = []
@@ -431,9 +431,7 @@ class Parser():
                 if self.tokens[j].character == Tag.PROPERTY:
                     if self.tokens[j+1].character == Tag.JOIN:
                         if self.tokens[j+1].show_str in self.algebra.keys():
-                            print('minghzong')
                             self.tokens[j+1].set_show_str(self.tokens[j+1].show_str + '_')
-                            print(self.tokens[j+1].show_str)
                         self.algebra[token.show_str].append(self.tokens[j+1].show_str)
                         self.algebra[self.tokens[j+1].show_str] = []
                         self.algebra[self.tokens[j+1].show_str].append(self.tokens[j].show_str)
@@ -479,7 +477,75 @@ class Parser():
                     self.algebra[condition] = []
             '''
             i += 1
-        print('zhixing')
 
+    def do_optimization(self):
+        # self.optimization = self.algebra[:]
+        self.gen_relation_algebra()
+        self.optimization.clear()
+        pNode = self.tokens[0].show_str
+        flag = True
+        while flag:
+            flag = False
+            if 'PROJECTION' in pNode:
+                flag = True
+                pro_list = self.algebra[pNode]
+                self.optimization['PROJECTION'] = [pro_list[0]]
+                self.optimization[pro_list[0]] = []
+                condition_list = self.algebra[pro_list[0]]  # 可能是表可能是sql
+                if 'SELECT' in condition_list[0]:
+                    pNode = condition_list[0]
+                elif 'AVG' in condition_list[0]:
+                    self.optimization[pro_list[0]] = ['AVG(%s)' %(self.algebra[condition_list[0]][0])]
+                    pNode = 'SELECT'
 
+            if 'SELECT' in pNode:
+                flag = True
+                select_list = self.algebra[pNode]
+                if len(select_list) == 1:
+                    condition = select_list[0]
+                    pro_list = self.algebra['PROJECTION']
+                    self.optimization['PROJECTION'] = [pro_list[0]]
+
+                    join_list = self.algebra['JOIN']
+                    self.optimization[pro_list[0]] = ['JOIN']
+                    self.optimization['JOIN'] = ['SELECT('+condition+')',join_list[1]]
+                    self.optimization['SELECT('+condition+')'] = [join_list[0]]
+                    pNode = 'END'
+                elif len(select_list) == 2:
+                    if 'JOIN' in select_list[1]:
+                        if '<temp_relation>' in self.optimization.keys():
+                            self.optimization['<temp_relation>'] = [select_list[1]]
+                        else:
+                            if 'PROJECTION' not in self.optimization.keys():
+                                self.optimization['PROJECTION'] = [select_list[1]]
+                            else:
+                                temp = self.optimization['PROJECTION'][0]
+                                self.optimization[temp].append(select_list[1])
+                        self.optimization[select_list[1]] = []
+                        join_list = self.algebra[select_list[1]] # 两个表
+                        if select_list[0] == '&':
+                            condition_list = self.algebra['&'] # 两个θ
+                            self.optimization[select_list[1]].append('SELECT('+condition_list[0]+')')
+                            self.optimization['SELECT('+condition_list[0]+')'] = []
+                            self.optimization['SELECT('+condition_list[0]+')'].append(join_list[0])
+                            self.optimization[select_list[1]].append('SELECT(' + condition_list[1] + ')')
+                            self.optimization['SELECT(' + condition_list[1] + ')'] = []
+                            self.optimization['SELECT(' + condition_list[1] + ')'].append(join_list[1])
+                            pNode = 'END'
+                        else: # one condition
+                            self.optimization[select_list[1]].append('SELECT(' + select_list[0] + ')')
+                            if select_list[0][0] == join_list[1][0]:
+                                self.optimization['SELECT(' + select_list[0] + ')'] = [join_list[1]]
+                                self.optimization[select_list[1]].append(join_list[0])
+                            else:
+                                self.optimization['SELECT(' + select_list[0] + ')'] = [join_list[0]]
+                                self.optimization[select_list[1]].append(join_list[1])
+                            if join_list[1] == '<temp_relation>':
+                                self.optimization[join_list[1]] = []
+                                pNode = self.algebra[join_list[1]][0]
+                            else:
+                                pNode = 'END'
+                    else:
+                        pNode = 'END'
+        print(self.optimization)
 

@@ -74,20 +74,35 @@ class UI():
             pNodeItem = items[nodes.index(pNode)]
             if pNode in algebra_tree.keys():
                 subNodes = algebra_tree[pNode]
-
-            # if isinstance(pNode.grammer_symbol,Nonterminal):
-            #     symbol = pNode.grammer_symbol
-            #     if symbol.character == '<sql>':
-            #         keyword = pNode.get_subnodes[0].get_subnodes[0]
-            #         if keyword.character == Tag.SELECT:
-            #             pass
-
                 for symbol in subNodes:
-                    items.append(processTree.insert(pNodeItem, 0, text=symbol, open=True))
+                    items.append(processTree.insert(pNodeItem, 'end', text=symbol, open=True))
                 nodes.extend(subNodes)
 
         window.mainloop()
 
     def query_optimization(self):
-        pass
+        # 初始化窗口
+        window = Tk()
+        window.title('语法分析树')
+        window.geometry('600x600')
+        window.resizable(0, 0)
+
+        processTree = ttk.Treeview(window)
+        processTree.pack(fill=BOTH, expand=YES)
+
+        self.parser.do_optimization()
+        algebra_tree = self.parser.optimization
+        nodes = ['PROJECTION']
+        items = []
+        items.append(processTree.insert('', 0, text=str(nodes[0]), open=True))
+        for pNode in nodes:
+            print(pNode)
+            pNodeItem = items[nodes.index(pNode)]
+            if pNode in algebra_tree.keys():
+                subNodes = algebra_tree[pNode]
+                for symbol in subNodes:
+                    items.append(processTree.insert(pNodeItem, 'end', text=symbol, open=True))
+                nodes.extend(subNodes)
+
+        window.mainloop()
 
