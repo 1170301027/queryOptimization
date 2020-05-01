@@ -194,6 +194,10 @@ class Terminal:
         self.character = character
         self.show_str = show_str
 
+    def set_show_str(self,show_str):
+        self.show_str = show_str
+
+
     def __str__(self):
         return self.show_str
 

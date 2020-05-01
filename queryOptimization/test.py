@@ -15,11 +15,11 @@ if __name__ == '__main__':
     #     print(str(pro))
 
     # 多条测试
-    # ui = []
-    # for i in querys:
-    #     ui.append(UI(Parser(), i))
-    #     ui[-1].root()
+    ui = []
+    for i in querys:
+        ui.append(UI(Parser(), i))
+        ui[-1].root()
     # 单条测试
-    i = 0
-    ui = UI(Parser(),querys[i])
-    ui.root()
+    # i = 3
+    # ui = UI(Parser(),querys[i])
+    # ui.root()

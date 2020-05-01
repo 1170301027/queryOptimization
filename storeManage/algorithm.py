@@ -347,9 +347,9 @@ class Algorithm():
             result += right[j:]
             return result
 
-        def get_data(addrs,choice):
+        def outer_sort(addrs,choice):
             '''
-            内存二分之一的归并
+            内存二分之一的归并处理
             :param addrs: 块所在的地址
             :return:
             '''

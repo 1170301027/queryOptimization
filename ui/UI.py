@@ -20,6 +20,16 @@ class UI():
         window.geometry('600x600')
         window.resizable(0, 0)
 
+        # 菜单
+        menubar = Menu(window)
+        show_menu = Menu(menubar)
+        show_list = ['关系代数', '查询优化']
+        show_list_event = [self.gen_relation_algebra, self.query_optimization]
+        for menu, event in zip(show_list, show_list_event):
+            show_menu.add_command(label=menu, command=event)
+        menubar.add_cascade(label='显示', menu=show_menu)
+        window.config(menu=menubar)
+
         processTree = ttk.Treeview(window)
         processTree.pack(fill=BOTH, expand=YES)
 
@@ -40,4 +50,44 @@ class UI():
                     screen_show = str(symbol)
                 items.append(processTree.insert(pNodeItem, 0, text=screen_show, open=True))
             nodes.extend(subNodes)
+
+
         window.mainloop()
+
+    def gen_relation_algebra(self):
+        # 初始化窗口
+        window = Tk()
+        window.title('语法分析树')
+        window.geometry('600x600')
+        window.resizable(0, 0)
+
+        processTree = ttk.Treeview(window)
+        processTree.pack(fill=BOTH, expand=YES)
+
+        self.parser.gen_relation_algebra()
+        algebra_tree = self.parser.algebra
+        nodes = [self.parser.tokens[0].show_str]
+        items = []
+        items.append(processTree.insert('', 0, text=str(nodes[0]), open=True))
+        for pNode in nodes:
+            print(pNode)
+            pNodeItem = items[nodes.index(pNode)]
+            if pNode in algebra_tree.keys():
+                subNodes = algebra_tree[pNode]
+
+            # if isinstance(pNode.grammer_symbol,Nonterminal):
+            #     symbol = pNode.grammer_symbol
+            #     if symbol.character == '<sql>':
+            #         keyword = pNode.get_subnodes[0].get_subnodes[0]
+            #         if keyword.character == Tag.SELECT:
+            #             pass
+
+                for symbol in subNodes:
+                    items.append(processTree.insert(pNodeItem, 0, text=symbol, open=True))
+                nodes.extend(subNodes)
+
+        window.mainloop()
+
+    def query_optimization(self):
+        pass
+

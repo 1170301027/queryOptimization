@@ -8,20 +8,16 @@ class Parser():
     Parser类用于构造语法分析树
     """
     def __init__(self):
-        self.cfg = CFG()
-        self.keyword = ['SELECT','PROJECTION','JOIN','AVG','DISTINCT','ALL','FROM','WHERE']
-        self.keywordTag = [Tag.SELECT,Tag.PROJECTION,Tag.JOIN,Tag.AVG]
-        self.delimiter = ['[',']','(',')',',']
-        self.delimiterTag = [Tag.LRP,Tag.RRP,Tag.SLP,Tag.SRP,Tag.COMMA]
-        self.binaryOperator = ['&']
-        self.logicalOperator = ['=','<','>','>=','<=']
-        self.logicalOperatorTag = [Tag.EQ,Tag.LT,Tag.GT,Tag.GE,Tag.LE]
+        self.cfg = CFG() # 文法
         self.tokens = [] # query中所有终结符集合，末尾为$
         self.currentI = -1 # 读到的当前token位置，-1为未开始分析
+
         self.firsts = {} # first集
         self.item_family = [] # 项目集
         self.actions = {}
         self.gotos = {}
+
+        self.algebra = {}
 
     def gettoken(self,query):
         '''
@@ -29,6 +25,13 @@ class Parser():
         :param query: 需要解析的SQL语句
         :return: tree
         '''
+        self.keyword = ['SELECT', 'PROJECTION', 'JOIN', 'AVG', 'DISTINCT', 'ALL', 'FROM', 'WHERE']
+        self.keywordTag = [Tag.SELECT, Tag.PROJECTION, Tag.JOIN, Tag.AVG]
+        self.delimiter = ['[', ']', '(', ')', ',']
+        self.delimiterTag = [Tag.LRP, Tag.RRP, Tag.SLP, Tag.SRP, Tag.COMMA]
+        self.binaryOperator = ['&']
+        self.logicalOperator = ['=', '<', '>', '>=', '<=']
+        self.logicalOperatorTag = [Tag.EQ, Tag.LT, Tag.GT, Tag.GE, Tag.LE]
         query = query.split(' ')
         for i in range(len(query)):
             token = query[i]
@@ -398,6 +401,85 @@ class Parser():
         for production in self.cfg.productions:
             print(str(production))
         self.program()
+
+    def gen_relation_algebra(self):
+        i = 0
+        current_str = ''
+        while i<len(self.tokens):
+            token = self.tokens[i]
+            if token.character == Tag.SELECT or token.character == Tag.PROJECTION or token.character == Tag.AVG:
+                if token.show_str in self.algebra.keys():
+                    print('minghzong')
+                    token.set_show_str(token.show_str+'_')
+                    print(token.show_str)
+                if current_str != '':
+                    self.algebra[current_str].append(token.show_str)
+                self.algebra[token.show_str] = []
+                condition = ''
+                for j in range(i+2,len(self.tokens)):
+                    if self.tokens[j].character == Tag.RRP:
+                        break
+                    condition += self.tokens[j].show_str
+                if '&' in condition:
+                    self.algebra[token.show_str].append('&')
+                    self.algebra['&'] = []
+                    self.algebra['&'].append(condition.split('&')[0])
+                    self.algebra['&'].append(condition.split('&')[1])
+                else:
+                    self.algebra[token.show_str].append(condition)
+                j = j+2
+                if self.tokens[j].character == Tag.PROPERTY:
+                    if self.tokens[j+1].character == Tag.JOIN:
+                        if self.tokens[j+1].show_str in self.algebra.keys():
+                            print('minghzong')
+                            self.tokens[j+1].set_show_str(self.tokens[j+1].show_str + '_')
+                            print(self.tokens[j+1].show_str)
+                        self.algebra[token.show_str].append(self.tokens[j+1].show_str)
+                        self.algebra[self.tokens[j+1].show_str] = []
+                        self.algebra[self.tokens[j+1].show_str].append(self.tokens[j].show_str)
+                        if self.tokens[j+2].character == Tag.PROPERTY:
+                            self.algebra[self.tokens[j+1].show_str].append(self.tokens[j+2].show_str)
+                            i = j + 4
+                        else:
+                            self.algebra[self.tokens[j+1].show_str].append('<temp_relation>')
+                            self.algebra['<temp_relation>'] = []
+                            current_str = '<temp_relation>'
+                            i = j + 1
+                else:
+                    i = j-1
+                    current_str = condition
+                    self.algebra[condition] = []
+            '''if token.character == Tag.PROJECTION or token.character == Tag.AVG:
+                if current_str != '':
+                    self.algebra[current_str].append(token.show_str)
+                self.algebra[token.show_str] = []
+                condition = ''
+                for j in range(i + 2, len(self.tokens)):
+                    if self.tokens[j].character == Tag.RRP:
+                        break
+                    condition += self.tokens[j].show_str
+                self.algebra[token.show_str].append(condition)
+                j = j + 2
+                if self.tokens[j].character == Tag.PROPERTY:
+                    if self.tokens[j + 1].character == Tag.JOIN:
+                        self.algebra[token.show_str].append('JOIN')
+                        self.algebra['JOIN'] = []
+                        self.algebra['JOIN'].append(self.tokens[j].show_str)
+                        if self.tokens[j + 2].character == Tag.PROPERTY:
+                            self.algebra['JOIN'].append(self.tokens[j + 2].show_str)
+                            i = j + 4
+                        else:
+                            self.algebra['JOIN'].append('<temp_relation>')
+                            self.algebra['<temp_relation>'] = []
+                            current_str = '<temp_relation>'
+                            i = j + 1
+                else:
+                    i = j - 1
+                    current_str = condition
+                    self.algebra[condition] = []
+            '''
+            i += 1
+        print('zhixing')
 
 
 
