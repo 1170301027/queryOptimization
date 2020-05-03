@@ -35,13 +35,13 @@ class Data():
             index = 0 # 块内偏移
             for i in range(value):
                 random_gen = random.Random()
-                ranA = random_gen.randint(firstMin,firstMax+1)
-                ranB = random_gen.randint(secondMin,secondMax+1)
+                ranA = random_gen.randint(firstMin,firstMax)
+                ranB = random_gen.randint(secondMin,secondMax)
                 if count < 7:
                     index = writeToBlock(block, ranA, index)
                     index = writeToBlock(block, ranB, index)
                     count += 1
-                else:
+                if count == 7:
                     addr = relation[-1]
                     relation.append(addr+1)
                     index = self.buf.insertBlock(block,addr)

@@ -78,6 +78,41 @@ class Algorithm():
             self.extmem.writeBlockToDisk(index, addrs[-1], self.buf)
         return addrs
 
+    def writeToAddrs(self, addrs, data_list):
+        '''
+        数据写入磁盘块指定位置
+        :param addrs:
+        :param data_list:
+        :return:
+        '''
+        if self.buf.isBufferFull():
+            self.buf.free()
+        new_block = self.buf.getNewBlock()
+        count = 0
+        index = 0
+        if not self.buf.isBufferFull():
+            for tuple in data_list:
+                for temp in tuple:
+                    index = self.writeToBlock(new_block, temp, index)
+                # if index % 8 != 0:
+                #     index += (8 - index % 8)
+                if count < 6:
+                    count += 1
+                    index = count*8
+                else:
+                    addr = addrs[-1]
+                    addrs.append(addr + 1)
+                    index = self.buf.insertBlock(new_block, addr)
+                    del new_block
+                    count = 0
+                    self.extmem.writeBlockToDisk(index, addr, self.buf)
+                    new_block = self.buf.getNewBlock()
+                    index = 0
+        if count != 0:
+            index = self.buf.insertBlock(new_block, addrs[-1])
+            self.extmem.writeBlockToDisk(index, addrs[-1], self.buf)
+        return addrs
+
     def relationSelect(self,relation,choice,value,firstAddr):
         '''
         实现关系选择算法
@@ -319,23 +354,30 @@ class Algorithm():
 
     def sort_merge_join(self,r_choice,s_choice,addr):
         def mergesort(seq,choice):
-            """归并排序"""
+            '''
+            归并排序
+            :param seq:要排序的序列
+            :param choice:
+            :return:
+            '''
             if len(seq) <= 1:
                 return seq
-            mid = len(seq) / 2  # 将列表分成更小的两个列表
-            # 分别对左右两个列表进行处理，分别返回两个排序好的列表
+            mid = (int)(len(seq) / 2)
             left = mergesort(seq[:mid],choice)
             right = mergesort(seq[mid:],choice)
-            # 对排序好的两个列表合并，产生一个新的排序好的列表
             return merge(left, right, choice)
 
         def merge(left, right, choice):
-            """合并两个已排序好的列表，产生一个新的已排序好的列表"""
-            result = []  # 新的已排序好的列表
-            i = 0  # 下标
+            '''
+            合并两个已排序好的列表，产生一个新的已排序好的列表
+            :param left: sorted list
+            :param right: sorted list
+            :param choice:
+            :return:
+            '''
+            result = []
+            i = 0
             j = 0
-            # 对两个列表中的元素 两两对比。
-            # 将最小的元素，放到result中，并对当前列表下标加1
             while i < len(left) and j < len(right):
                 if left[i][choice] <= right[j][choice]:
                     result.append(left[i])
@@ -353,14 +395,38 @@ class Algorithm():
             :param addrs: 块所在的地址
             :return:
             '''
-            A_addrs = addrs[0:7][:]
-            B_addrs = addrs[8:15][:]
-            self.buf.free()
-            data_list = []
-            for addr in A_addrs:
-                index = self.extmem.readBlockFromDisk(addr)
-                data_list.extend(self.parserBlock(index))
-            data_list = mergesort(data_list,choice)
+            for i in range(3):
+                if i == 0: # AB有序
+                    A_addrs = addrs[0:8][:]
+                    B_addrs = addrs[8:][:]
+                elif i == 1: # 排A1 B1，A2 B2
+                    A_addrs = addrs[0:4][:]
+                    A_addrs.extend(addrs[8:12][:])
+                    B_addrs = addrs[4:8][:]
+                    B_addrs.extend(addrs[12:][:])
+                else:
+                    A_addrs = addrs[4:8][:]
+                    B_addrs = addrs[8:12][:]
+                data_list = []
+                data_list_1 = []
+                self.buf.free()
+                for addr in A_addrs:
+                    index = self.extmem.readBlockFromDisk(addr,self.buf)
+                    data_list.extend(self.parserBlock(self.buf.getBlock(index)))
+                self.buf.free()
+                for addr in B_addrs:
+                    index = self.extmem.readBlockFromDisk(addr,self.buf)
+                    data_list_1.extend(self.parserBlock(self.buf.getBlock(index)))
+                data_list = mergesort(data_list, choice)
+                # print(i)
+                # print(data_list)
+                # print(A_addrs[0],len(data_list))
+                self.writeToDisk(A_addrs[0], data_list)
+                data_list.clear()
+                data_list = mergesort(data_list_1,choice)
+                # print(data_list)
+                # print(addrs[(int)(len(addrs)/2)],len(data_list))
+                self.writeToDisk(addrs[(int)(len(addrs)/2)],data_list)
 
 
         # 参数判断阶段
@@ -373,3 +439,29 @@ class Algorithm():
         self.buf.free()
         # 执行阶段
         addrs = [addr]
+        # 排A有序
+        outer_sort(self.data.R,r_choice)
+        # 排B有序
+        # AB排CD排
+        lenth = len(self.data.S)
+        temp_s = self.data.S[:(int)(lenth / 2)][:]
+        outer_sort(temp_s,s_choice)
+        temp_s = self.data.S[(int)(lenth / 2):][:]
+        outer_sort(temp_s, s_choice)
+        # AC排BD排
+        temp_s = self.data.S[:(int)(lenth / 4)][:]
+        temp_s.extend(self.data.S[(int)(lenth / 2):(int)(lenth* 3 / 4)])
+        outer_sort(temp_s, s_choice)
+        print(lenth/4,lenth/2,lenth* 3 / 4)
+        temp_s = self.data.S[(int)(lenth / 4):(int)(lenth / 2)][:]
+        temp_s.extend(self.data.S[(int)(lenth * 3 / 4):])
+        print(len(temp_s))
+        outer_sort(temp_s, s_choice)
+        # BC排
+        temp_s = self.data.S[(int)(lenth / 4):(int)(lenth * 3 / 4)][:]
+        outer_sort(temp_s, s_choice)
+        # AB排CD排
+        temp_s = self.data.S[:(int)(lenth / 2)][:]
+        outer_sort(temp_s,s_choice)
+        temp_s = self.data.S[(int)(lenth / 2):][:]
+        outer_sort(temp_s, s_choice)
