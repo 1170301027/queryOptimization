@@ -62,6 +62,6 @@ def testSortMergeJoin():
 
 # testRelationSelect()
 # testRelationProjection()
-# testNestLoopJoin()
-# testHashJoin()
+testNestLoopJoin()
+testHashJoin()
 testSortMergeJoin()

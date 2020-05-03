@@ -78,41 +78,6 @@ class Algorithm():
             self.extmem.writeBlockToDisk(index, addrs[-1], self.buf)
         return addrs
 
-    def writeToAddrs(self, addrs, data_list):
-        '''
-        数据写入磁盘块指定位置
-        :param addrs:
-        :param data_list:
-        :return:
-        '''
-        if self.buf.isBufferFull():
-            self.buf.free()
-        new_block = self.buf.getNewBlock()
-        count = 0
-        index = 0
-        if not self.buf.isBufferFull():
-            for tuple in data_list:
-                for temp in tuple:
-                    index = self.writeToBlock(new_block, temp, index)
-                # if index % 8 != 0:
-                #     index += (8 - index % 8)
-                if count < 6:
-                    count += 1
-                    index = count*8
-                else:
-                    addr = addrs[-1]
-                    addrs.append(addr + 1)
-                    index = self.buf.insertBlock(new_block, addr)
-                    del new_block
-                    count = 0
-                    self.extmem.writeBlockToDisk(index, addr, self.buf)
-                    new_block = self.buf.getNewBlock()
-                    index = 0
-        if count != 0:
-            index = self.buf.insertBlock(new_block, addrs[-1])
-            self.extmem.writeBlockToDisk(index, addrs[-1], self.buf)
-        return addrs
-
     def relationSelect(self,relation,choice,value,firstAddr):
         '''
         实现关系选择算法
@@ -405,28 +370,34 @@ class Algorithm():
                     B_addrs = addrs[4:8][:]
                     B_addrs.extend(addrs[12:][:])
                 else:
-                    A_addrs = addrs[4:8][:]
-                    B_addrs = addrs[8:12][:]
+                    A_addrs = addrs[4:12][:]
+                    B_addrs = []
                 data_list = []
                 data_list_1 = []
                 self.buf.free()
                 for addr in A_addrs:
                     index = self.extmem.readBlockFromDisk(addr,self.buf)
                     data_list.extend(self.parserBlock(self.buf.getBlock(index)))
+                data_list = mergesort(data_list, choice)
                 self.buf.free()
                 for addr in B_addrs:
                     index = self.extmem.readBlockFromDisk(addr,self.buf)
                     data_list_1.extend(self.parserBlock(self.buf.getBlock(index)))
-                data_list = mergesort(data_list, choice)
+                data_list_1 = mergesort(data_list_1, choice)
                 # print(i)
                 # print(data_list)
                 # print(A_addrs[0],len(data_list))
-                self.writeToDisk(A_addrs[0], data_list)
-                data_list.clear()
-                data_list = mergesort(data_list_1,choice)
+                # data_list.clear()
                 # print(data_list)
                 # print(addrs[(int)(len(addrs)/2)],len(data_list))
-                self.writeToDisk(addrs[(int)(len(addrs)/2)],data_list)
+                if i < 2:
+                    self.writeToDisk(A_addrs[0], data_list)
+                    self.writeToDisk(addrs[(int)(len(addrs)/2)],data_list_1)
+                else:
+                    data_list_1 = data_list[(int)(len(data_list)/2):]
+                    data_list = data_list[:(int)(len(data_list)/2)]
+                    self.writeToDisk(A_addrs[0], data_list)
+                    self.writeToDisk(addrs[(int)(len(addrs) / 2)], data_list_1)
 
 
         # 参数判断阶段
@@ -438,7 +409,6 @@ class Algorithm():
         s_choice -= 1
         self.buf.free()
         # 执行阶段
-        addrs = [addr]
         # 排A有序
         outer_sort(self.data.R,r_choice)
         # 排B有序
@@ -460,8 +430,55 @@ class Algorithm():
         # BC排
         temp_s = self.data.S[(int)(lenth / 4):(int)(lenth * 3 / 4)][:]
         outer_sort(temp_s, s_choice)
-        # AB排CD排
-        temp_s = self.data.S[:(int)(lenth / 2)][:]
-        outer_sort(temp_s,s_choice)
-        temp_s = self.data.S[(int)(lenth / 2):][:]
-        outer_sort(temp_s, s_choice)
+
+        # 连接
+        self.buf.free()
+        addrs = [addr]
+        write_back = self.buf.getNewBlock()
+        i = j = next_index = 0
+        flag = True
+        while i < len(self.data.R) and j < len(self.data.S):
+            r_index = self.extmem.readBlockFromDisk(self.data.R[i],self.buf)
+            r_tuples = self.parserBlock(self.buf.getBlock(r_index))
+            s_index = self.extmem.readBlockFromDisk(self.data.S[j],self.buf)
+            s_tuples = self.parserBlock(self.buf.getBlock(s_index))
+            for r_tuple in r_tuples:
+                for s_tuple in s_tuples:
+                    if r_tuple[r_choice] == s_tuple[s_choice]:
+                        next_index = self.writeToBlock(write_back, r_tuple[0], next_index)
+                        next_index = self.writeToBlock(write_back, r_tuple[1], next_index)
+                        next_index = self.writeToBlock(write_back, s_tuple[0], next_index)
+                        next_index = self.writeToBlock(write_back, s_tuple[1], next_index)
+                        if next_index >= 3 * 12:
+                            next_index = 0
+                            addr = addrs[-1]
+                            addrs.append(addr + 1)
+                            write_back_index = self.buf.insertBlock(write_back, addr)
+                            self.extmem.writeBlockToDisk(write_back_index, addr, self.buf)
+                            self.buf.freeBlock(write_back_index)
+                            write_back = self.buf.getNewBlock()
+                    elif r_tuple[r_choice] > s_tuple[s_choice]:
+                        continue
+                    else:
+                        break
+            self.buf.freeBlock(s_index)
+            self.buf.freeBlock(r_index)
+            if not flag:
+                i -= 2
+                j += 1
+                flag = True
+                continue
+            if r_tuples[-1][r_choice] < s_tuples[-1][s_choice]:
+                i += 1
+            elif r_tuples[-1][r_choice] > s_tuples[-1][s_choice]:
+                j += 1
+            else:
+                i += 1
+                flag = False
+        if next_index != 0: # 结束若由未写入磁盘的存在，则写入
+            next_index = self.buf.insertBlock(write_back,addrs[-1])
+            self.extmem.writeBlockToDisk(next_index,addrs[-1],self.buf)
+            self.buf.freeBlock(next_index)
+        else: # 无则删除冗余地址后返回
+            del addrs[-1]
+        return addrs
