@@ -1,1 +1,1 @@
-﻿# queryOptimizationa simple process to show query optimization in database一个简单的程序显示数据库中的查询优化，程序分析测试中的特定格式的查询语句，前端输出语法分析树，和优化后的语法分析树更新：extmem.py 用于模拟磁盘存取，store Manage用于处理查询管理，实现查询处理部分的一些算法
+﻿# queryOptimizationa simple process to show query optimization in database一个简单的程序显示数据库中的查询优化，程序分析测试中的特定格式的查询语句，前端输出语法分析树，和优化后的语法分析树UI分三部分：基于编译原理的相关知识建立的语法分析树，解析的查询执行树，优化后的查询执行树（选择下推）更新：extmem.py 用于模拟磁盘存取，内含有class Buffer，模拟缓存。store Manage用于处理查询管理，实现查询处理部分的一些算法：投影算法（去重），选择算法，Nest-Loop Join算法，Hash Join算法，Sort-Merge Join算法。
